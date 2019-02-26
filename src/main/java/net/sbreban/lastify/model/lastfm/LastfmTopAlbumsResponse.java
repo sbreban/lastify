@@ -1,19 +1,19 @@
-package net.sbreban.lastify.model;
+package net.sbreban.lastify.model.lastfm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class TopAlbums {
+public class LastfmTopAlbumsResponse {
 
   @JsonProperty("topalbums")
-  private AlbumList topAlbums;
+  private LastfmAlbumList topAlbums;
 
-  public AlbumList getTopAlbums() {
+  public LastfmAlbumList getTopAlbums() {
     return topAlbums;
   }
 
   @Override
   public String toString() {
-    return "TopAlbums{" +
+    return "LastfmTopAlbumsResponse{" +
         "topAlbums=" + topAlbums +
         '}';
   }

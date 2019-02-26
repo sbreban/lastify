@@ -1,14 +1,13 @@
-package net.sbreban.lastify.model;
+package net.sbreban.lastify.model.lastfm;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import net.sbreban.lastify.repository.AlbumDeserializer;
 
-@JsonDeserialize(using = AlbumDeserializer.class)
-public class Album {
+@JsonDeserialize(using = LastfmAlbumDeserializer.class)
+public class LastfmAlbum {
   private String artist;
   private String name;
 
-  public Album() {
+  public LastfmAlbum() {
   }
 
   public void setArtist(String artist) {
@@ -29,7 +28,7 @@ public class Album {
 
   @Override
   public String toString() {
-    return "Album{" +
+    return "LastfmAlbum{" +
         "artist='" + artist + '\'' +
         ", name='" + name + '\'' +
         '}';

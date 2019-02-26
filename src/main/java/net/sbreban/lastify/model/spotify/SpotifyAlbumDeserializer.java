@@ -1,32 +1,30 @@
-package net.sbreban.lastify.repository;
+package net.sbreban.lastify.model.spotify;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import net.sbreban.lastify.model.Album;
 
 import java.io.IOException;
 
-public class AlbumDeserializer extends StdDeserializer<Album> {
+public class SpotifyAlbumDeserializer extends StdDeserializer<SpotifyAlbum> {
 
-  public AlbumDeserializer() {
+  public SpotifyAlbumDeserializer() {
     this(null);
   }
 
-  public AlbumDeserializer(Class<?> vc) {
+  public SpotifyAlbumDeserializer(Class<?> vc) {
     super(vc);
   }
 
   @Override
-  public Album deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+  public SpotifyAlbum deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
     JsonNode productNode = jp.getCodec()
         .readTree(jp);
-    Album album = new Album();
+    SpotifyAlbum album = new SpotifyAlbum();
     album.setName(productNode.get("name").textValue());
-    album.setName(productNode.get("name").textValue());
-    album.setArtist(productNode.get("artist").get("name").textValue());
+    album.setReleaseDate(productNode.get("release_date").textValue());
     return album;
   }
 }
