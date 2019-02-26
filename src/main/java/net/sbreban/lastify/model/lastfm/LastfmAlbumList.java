@@ -9,8 +9,15 @@ public class LastfmAlbumList {
   @JsonProperty("album")
   private List<LastfmAlbum> lastfmAlbums;
 
+  @JsonProperty("@attr")
+  private PageData pageData;
+
   public List<LastfmAlbum> getLastfmAlbums() {
     return lastfmAlbums;
+  }
+
+  public PageData getPageData() {
+    return pageData;
   }
 
   @Override

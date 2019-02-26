@@ -43,11 +43,16 @@ public class SpotifyAlbumClient {
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
-    Response spotifyResponse = spotifyClient.target(searchArtistUri)
-        .request(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).get();
-    SpotifyAlbumSearchResult spotifyAlbumSearchResult = spotifyResponse.readEntity(SpotifyAlbumSearchResult.class);
+
+    SpotifyAlbumSearchResult spotifyAlbumSearchResult = null;
+    try {
+      Response spotifyResponse = spotifyClient.target(searchArtistUri)
+          .request(MediaType.APPLICATION_JSON)
+          .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).get();
+      spotifyAlbumSearchResult = spotifyResponse.readEntity(SpotifyAlbumSearchResult.class);
+    } catch (Exception e) {
+      System.out.println("Exception while searching for album: " + albumName);
+    }
 
     Optional<SpotifyAlbum> spotifyAlbum = Optional.empty();
     if (spotifyAlbumSearchResult != null && spotifyAlbumSearchResult.getAlbums() != null) {
