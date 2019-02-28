@@ -10,6 +10,11 @@ import java.io.IOException;
 
 public class SpotifyAlbumDeserializer extends StdDeserializer<SpotifyAlbum> {
 
+  private static final String ALBUM_NAME_FIELD = "name";
+  private static final String RELEASE_DATE_FIELD = "release_date";
+  private static final String ARTISTS_FIELD = "artists";
+  private static final String ARTIST_NAME_FIELD = "name";
+
   public SpotifyAlbumDeserializer() {
     this(null);
   }
@@ -23,9 +28,9 @@ public class SpotifyAlbumDeserializer extends StdDeserializer<SpotifyAlbum> {
     JsonNode productNode = jp.getCodec()
         .readTree(jp);
     SpotifyAlbum album = new SpotifyAlbum();
-    album.setName(productNode.get("name").textValue());
-    album.setReleaseDate(productNode.get("release_date").textValue());
-    album.setArtist(productNode.get("artists").get(0).get("name").textValue());
+    album.setName(productNode.get(ALBUM_NAME_FIELD).textValue());
+    album.setReleaseDate(productNode.get(RELEASE_DATE_FIELD).textValue());
+    album.setArtist(productNode.get(ARTISTS_FIELD).get(0).get(ARTIST_NAME_FIELD).textValue());
     return album;
   }
 }
