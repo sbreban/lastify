@@ -17,6 +17,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class LastfmAlbumClient {
@@ -44,15 +48,36 @@ public class LastfmAlbumClient {
 
     LastfmTopAlbumsResponse lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(1, uriTemplate, user, apiKey);
 
-    List<LastfmAlbum> lastfmAlbums = new ArrayList<>();
     PageData pageData = lastfmTopAlbumsResponse.getTopAlbums().getPageData();
     int totalPages = pageData.getTotalPages();
 
+    List<CompletableFuture<LastfmTopAlbumsResponse>> futures = new ArrayList<>();
     if (totalPages > 0) {
       for (int page = pageData.getPage(); page < totalPages; page++) {
-        logger.debug("Loaded page " + page + ": " + lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
-        lastfmAlbums.addAll(lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
-        lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(page, uriTemplate, user, apiKey);
+        int finalPage = page;
+        CompletableFuture<LastfmTopAlbumsResponse> future = CompletableFuture.supplyAsync(() -> getLastfmTopAlbumsResponse(finalPage, uriTemplate, user, apiKey));
+        futures.add(future);
+      }
+    }
+
+    CompletableFuture<LastfmTopAlbumsResponse>[] array = futures.toArray(new CompletableFuture[0]);
+    CompletableFuture completableFuture = CompletableFuture.allOf(array);
+    List<LastfmTopAlbumsResponse> collect = null;
+    try {
+      completableFuture.get();
+      collect = Stream.of(array).map(CompletableFuture::join).collect(Collectors.toList());
+    } catch (InterruptedException | ExecutionException e) {
+      if (logger.isTraceEnabled()) {
+        logger.error("Error while getting results from futures", e);
+      } else {
+        logger.error("Error while getting results from futures: " + e.getMessage());
+      }
+    }
+
+    List<LastfmAlbum> lastfmAlbums = new ArrayList<>();
+    if (collect != null) {
+      for (LastfmTopAlbumsResponse topAlbumsResponse : collect) {
+        lastfmAlbums.addAll(topAlbumsResponse.getTopAlbums().getLastfmAlbums());
       }
     }
 
@@ -64,6 +89,8 @@ public class LastfmAlbumClient {
     Response response = lastfmClient
         .target(uri)
         .request(MediaType.APPLICATION_JSON).get();
-    return response.readEntity(LastfmTopAlbumsResponse.class);
+    LastfmTopAlbumsResponse lastfmTopAlbumsResponse = response.readEntity(LastfmTopAlbumsResponse.class);
+    logger.debug("Loaded page " + page + ": " + lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
+    return lastfmTopAlbumsResponse;
   }
 }
