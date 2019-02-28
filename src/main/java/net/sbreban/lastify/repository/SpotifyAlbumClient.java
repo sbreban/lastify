@@ -56,7 +56,11 @@ public class SpotifyAlbumClient {
           .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).get();
       spotifyAlbumSearchResult = spotifyResponse.readEntity(SpotifyAlbumSearchResult.class);
     } catch (Exception e) {
-      logger.error("Exception while searching for album: " + album, e);
+      if (logger.isTraceEnabled()) {
+        logger.error("Exception while searching for album: " + album, e);
+      } else {
+        logger.error("Exception while searching for album: " + album + ", " + e.getMessage());
+      }
     }
 
     Optional<SpotifyAlbum> spotifyAlbum = Optional.empty();

@@ -38,26 +38,28 @@ public class LastfmAlbumClient {
   }
 
   public List<LastfmAlbum> getTopAlbums() {
-    LastfmTopAlbumsResponse lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(1);
+    UriTemplate uriTemplate = new UriTemplate(LASTFM_TOP_ALBUMS_URI);
+    String user = environment.getProperty(LASTFM_USER);
+    String apiKey = environment.getProperty(LASTFM_APIKEY);
+
+    LastfmTopAlbumsResponse lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(1, uriTemplate, user, apiKey);
 
     List<LastfmAlbum> lastfmAlbums = new ArrayList<>();
     PageData pageData = lastfmTopAlbumsResponse.getTopAlbums().getPageData();
-    int currentPage = pageData.getPage();
     int totalPages = pageData.getTotalPages();
-    while (totalPages > 0 && currentPage < totalPages) {
-      logger.debug("Loaded page " + currentPage + ": " + lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
-      lastfmAlbums.addAll(lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
-      currentPage++;
-      lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(currentPage);
+
+    if (totalPages > 0) {
+      for (int page = pageData.getPage(); page < totalPages; page++) {
+        logger.debug("Loaded page " + page + ": " + lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
+        lastfmAlbums.addAll(lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
+        lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(page, uriTemplate, user, apiKey);
+      }
     }
 
     return lastfmAlbums;
   }
 
-  private LastfmTopAlbumsResponse getLastfmTopAlbumsResponse(int page) {
-    String user = environment.getProperty(LASTFM_USER);
-    String apiKey = environment.getProperty(LASTFM_APIKEY);
-    UriTemplate uriTemplate = new UriTemplate(LASTFM_TOP_ALBUMS_URI);
+  private LastfmTopAlbumsResponse getLastfmTopAlbumsResponse(int page, UriTemplate uriTemplate, String user, String apiKey) {
     String uri = uriTemplate.createURI(user, apiKey, String.valueOf(page));
     Response response = lastfmClient
         .target(uri)
