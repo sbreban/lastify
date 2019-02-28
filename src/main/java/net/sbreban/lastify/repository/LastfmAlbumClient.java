@@ -5,6 +5,8 @@ import net.sbreban.lastify.model.lastfm.LastfmTopAlbumsResponse;
 import net.sbreban.lastify.model.lastfm.PageData;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.uri.UriTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,8 @@ import java.util.List;
 
 @Component
 public class LastfmAlbumClient {
+
+  private final static Logger logger = LoggerFactory.getLogger(LastfmAlbumClient.class);
 
   private static final String LASTFM_USER = "lastfm.user";
   private static final String LASTFM_APIKEY = "lastfm.apikey";
@@ -41,7 +45,7 @@ public class LastfmAlbumClient {
     int currentPage = pageData.getPage();
     int totalPages = pageData.getTotalPages();
     while (totalPages > 0 && currentPage < totalPages) {
-      System.out.println("Loaded page " + currentPage + ": " + lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
+      logger.debug("Loaded page " + currentPage + ": " + lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
       lastfmAlbums.addAll(lastfmTopAlbumsResponse.getTopAlbums().getLastfmAlbums());
       currentPage++;
       lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(currentPage);

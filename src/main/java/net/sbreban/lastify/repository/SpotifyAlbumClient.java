@@ -4,6 +4,8 @@ import net.sbreban.lastify.model.spotify.SpotifyAlbum;
 import net.sbreban.lastify.model.spotify.SpotifyAlbumSearchResult;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.uri.UriTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,8 @@ import java.util.Optional;
 
 @Component
 public class SpotifyAlbumClient {
+
+  private final static Logger logger = LoggerFactory.getLogger(SpotifyAlbumClient.class);
 
   private static final String SPOTIFY_TOKEN = "spotify.token";
   private static final String SPOTIFY_SEARCH_URI
@@ -41,7 +45,7 @@ public class SpotifyAlbumClient {
     try {
       searchArtistUri = searchArtistTemplate.createURI(URLEncoder.encode(albumName, "UTF-8"));
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      logger.error("Error creating URI", e);
     }
 
     SpotifyAlbumSearchResult spotifyAlbumSearchResult = null;
@@ -51,7 +55,7 @@ public class SpotifyAlbumClient {
           .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).get();
       spotifyAlbumSearchResult = spotifyResponse.readEntity(SpotifyAlbumSearchResult.class);
     } catch (Exception e) {
-      System.out.println("Exception while searching for album: " + albumName);
+      logger.error("Exception while searching for album: " + albumName, e);
     }
 
     Optional<SpotifyAlbum> spotifyAlbum = Optional.empty();
