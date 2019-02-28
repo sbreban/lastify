@@ -25,6 +25,7 @@ public class SpotifyAlbumDeserializer extends StdDeserializer<SpotifyAlbum> {
     SpotifyAlbum album = new SpotifyAlbum();
     album.setName(productNode.get("name").textValue());
     album.setReleaseDate(productNode.get("release_date").textValue());
+    album.setArtist(productNode.get("artists").get(0).get("name").textValue());
     return album;
   }
 }

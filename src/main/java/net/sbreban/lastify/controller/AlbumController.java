@@ -30,7 +30,7 @@ public class AlbumController {
     List<LastfmAlbum> lastfmAlbums = lastfmAlbumClient.getTopAlbums();
     List<LastfmAlbum> missingAlbums = new ArrayList<>();
     lastfmAlbums.forEach((LastfmAlbum album) -> {
-      Optional<SpotifyAlbum> spotifyAlbum = spotifyAlbumClient.searchAlbum(album.getName());
+      Optional<SpotifyAlbum> spotifyAlbum = spotifyAlbumClient.searchAlbum(album);
       if (!spotifyAlbum.isPresent()) {
         missingAlbums.add(album);
       }

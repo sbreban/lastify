@@ -1,5 +1,6 @@
 package net.sbreban.lastify.repository;
 
+import net.sbreban.lastify.model.lastfm.LastfmAlbum;
 import net.sbreban.lastify.model.spotify.SpotifyAlbum;
 import net.sbreban.lastify.model.spotify.SpotifyAlbumSearchResult;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -37,13 +38,13 @@ public class SpotifyAlbumClient {
     this.environment = environment;
   }
 
-  public Optional<SpotifyAlbum> searchAlbum(String albumName) {
+  public Optional<SpotifyAlbum> searchAlbum(LastfmAlbum album) {
     String token = environment.getProperty(SPOTIFY_TOKEN);
     UriTemplate searchArtistTemplate = new UriTemplate(SPOTIFY_SEARCH_URI);
 
     String searchArtistUri = null;
     try {
-      searchArtistUri = searchArtistTemplate.createURI(URLEncoder.encode(albumName, "UTF-8"));
+      searchArtistUri = searchArtistTemplate.createURI(URLEncoder.encode(album.getName(), "UTF-8"));
     } catch (UnsupportedEncodingException e) {
       logger.error("Error creating URI", e);
     }
@@ -55,14 +56,17 @@ public class SpotifyAlbumClient {
           .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).get();
       spotifyAlbumSearchResult = spotifyResponse.readEntity(SpotifyAlbumSearchResult.class);
     } catch (Exception e) {
-      logger.error("Exception while searching for album: " + albumName, e);
+      logger.error("Exception while searching for album: " + album, e);
     }
 
     Optional<SpotifyAlbum> spotifyAlbum = Optional.empty();
     if (spotifyAlbumSearchResult != null && spotifyAlbumSearchResult.getAlbums() != null) {
       List<SpotifyAlbum> albums = spotifyAlbumSearchResult.getAlbums().getItems();
       if (albums != null && !albums.isEmpty()) {
-        spotifyAlbum = Optional.of(albums.get(0));
+        SpotifyAlbum firstAlbum = albums.get(0);
+        if (firstAlbum.getArtist().equals(album.getArtist())) {
+          spotifyAlbum = Optional.of(firstAlbum);
+        }
       }
 
     }

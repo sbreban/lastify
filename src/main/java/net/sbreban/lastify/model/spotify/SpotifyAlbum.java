@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 public class SpotifyAlbum {
   private String name;
   private String releaseDate;
+  private String artist;
 
   public String getName() {
     return name;
@@ -23,11 +24,20 @@ public class SpotifyAlbum {
     this.releaseDate = releaseDate;
   }
 
+  public String getArtist() {
+    return artist;
+  }
+
+  public void setArtist(String artist) {
+    this.artist = artist;
+  }
+
   @Override
   public String toString() {
     return "SpotifyAlbum{" +
         "name='" + name + '\'' +
         ", releaseDate='" + releaseDate + '\'' +
+        ", artist='" + artist + '\'' +
         '}';
   }
 }
