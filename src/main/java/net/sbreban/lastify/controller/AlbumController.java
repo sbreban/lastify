@@ -41,7 +41,7 @@ public class AlbumController {
     List<LastfmAlbum> lastfmAlbums = lastfmAlbumClient.getTopAlbums(username);
     List<LastfmAlbum> missingAlbums = new ArrayList<>();
     if (streamingService.equals(SPOTIFY)) {
-      missingAlbums = spotifyAlbumClient.getMissingAlbumsAsync(lastfmAlbums);
+      missingAlbums = spotifyAlbumClient.getMissingAlbums(lastfmAlbums);
     }
     model.addAttribute("albums", missingAlbums);
     return "album-list";

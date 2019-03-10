@@ -34,7 +34,8 @@ public class SpotifyAlbumClient {
   private static final String SPOTIFY_TOKEN = "spotify.token";
   private static final String SPOTIFY_SEARCH_URI
       = "https://api.spotify.com/v1/search?q=album%3A{album}%20artist%3A{artist}&type=album&limit=1";
-  private static final int ALBUM_BATCH_SIZE = 4000;
+  private static final int ALBUM_BATCH_SIZE = 100;
+  private static final String RETRY_AFTER = "Retry-After";
 
   private final Environment environment;
   private Client spotifyClient = ClientBuilder.newBuilder().register(JacksonFeature.class).register(ObjectMapperProvider.class).build();
@@ -59,9 +60,13 @@ public class SpotifyAlbumClient {
           .request(MediaType.APPLICATION_JSON)
           .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).get();
       Response.StatusType statusInfo = spotifyResponse.getStatusInfo();
-      logger.debug("Search status: " + statusInfo);
-      if (statusInfo.getStatusCode() == 200) {
+      logger.debug("Search status: " + statusInfo.getStatusCode() + " " + statusInfo.getReasonPhrase());
+      if (StatusCode.isOK(statusInfo.getStatusCode())) {
         spotifyAlbumSearchResult = spotifyResponse.readEntity(SpotifyAlbumSearchResult.class);
+      } else if (StatusCode.isTooManyRequests(statusInfo.getStatusCode())) {
+        int retryAfter = Integer.parseInt(spotifyResponse.getHeaderString(RETRY_AFTER));
+        Thread.sleep(retryAfter*1000);
+        return searchAlbum(album, searchArtistTemplate, token);
       }
     } catch (Exception e) {
       if (logger.isTraceEnabled()) {
@@ -96,7 +101,9 @@ public class SpotifyAlbumClient {
     return missingAlbums;
   }
 
-  public List<LastfmAlbum> getMissingAlbumsAsync(List<LastfmAlbum> lastfmAlbums) {
+  public List<LastfmAlbum> getMissingAlbums(List<LastfmAlbum> lastfmAlbums) {
+    long startTime = System.currentTimeMillis();
+
     String token = environment.getProperty(SPOTIFY_TOKEN);
     List<LastfmAlbum> missingAlbums = new ArrayList<>();
 
@@ -123,6 +130,14 @@ public class SpotifyAlbumClient {
       }
     }
 
+    printStatistics(lastfmAlbums, missingAlbums, startTime);
+
     return missingAlbums;
+  }
+
+  private void printStatistics(List<LastfmAlbum> lastfmAlbums, List<LastfmAlbum> missingAlbums, long startTime) {
+    double missingPercent = (missingAlbums.size() / (double) lastfmAlbums.size()) * 100;
+    logger.debug("Missing albums: " + missingPercent + " %, total albums: " + lastfmAlbums.size() + ", missing: " + missingAlbums.size());
+    logger.debug("Search took: " + (System.currentTimeMillis() - startTime) / 1000 + " s");
   }
 }
