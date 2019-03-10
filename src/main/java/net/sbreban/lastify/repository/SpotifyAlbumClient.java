@@ -1,6 +1,5 @@
 package net.sbreban.lastify.repository;
 
-import com.wrapper.spotify.model_objects.credentials.ClientCredentials;
 import net.sbreban.lastify.model.lastfm.LastfmAlbum;
 import net.sbreban.lastify.model.spotify.SpotifyAlbum;
 import net.sbreban.lastify.model.spotify.SpotifyAlbumSearchResult;
@@ -113,7 +112,7 @@ public class SpotifyAlbumClient {
         int startIndex = i;
         int endIndex = Math.min(startIndex + ALBUM_BATCH_SIZE, lastfmAlbums.size());
         CompletableFuture<List<LastfmAlbum>> future = CompletableFuture.supplyAsync(() -> {
-              ClientCredentials credentials = credentialsProvider.getCredentials();
+              SpotifyCredentials credentials = credentialsProvider.getCredentials();
               return searchAlbums(lastfmAlbums.subList(startIndex, endIndex), searchArtistTemplate, credentials.getAccessToken());
             }
         );

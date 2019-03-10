@@ -34,14 +34,16 @@ public class SpotifyCredentialsProvider {
         .build();
   }
 
-  public ClientCredentials getCredentials() {
-    ClientCredentials clientCredentials = null;
+  public SpotifyCredentials getCredentials() {
+    SpotifyCredentials spotifyCredentials = null;
+
     try {
-      clientCredentials = clientCredentialsRequest.execute();
+      ClientCredentials clientCredentials = clientCredentialsRequest.execute();
+      spotifyCredentials = new SpotifyCredentials(clientCredentials.getAccessToken(), clientCredentials.getTokenType(), clientCredentials.getExpiresIn());
     } catch (IOException | SpotifyWebApiException e) {
       logger.error("Error getting credentials", e);
     }
 
-    return clientCredentials;
+    return spotifyCredentials;
   }
 }
