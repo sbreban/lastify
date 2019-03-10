@@ -33,7 +33,7 @@ public class SpotifyAlbumClient {
 
   private static final String SPOTIFY_TOKEN = "spotify.token";
   private static final String SPOTIFY_SEARCH_URI
-      = "https://api.spotify.com/v1/search?q={album}&type=album&limit=1";
+      = "https://api.spotify.com/v1/search?q=album%3A{album}%20artist%3A{artist}&type=album&limit=1";
   private static final int ALBUM_BATCH_SIZE = 4000;
 
   private final Environment environment;
@@ -48,7 +48,7 @@ public class SpotifyAlbumClient {
 
     String searchArtistUri = null;
     try {
-      searchArtistUri = searchArtistTemplate.createURI(URLEncoder.encode(album.getName(), "UTF-8"));
+      searchArtistUri = searchArtistTemplate.createURI(URLEncoder.encode(album.getName(), "UTF-8"), URLEncoder.encode(album.getArtist(), "UTF-8"));
     } catch (UnsupportedEncodingException e) {
       logger.error("Error creating URI", e);
     }
@@ -76,9 +76,7 @@ public class SpotifyAlbumClient {
       List<SpotifyAlbum> albums = spotifyAlbumSearchResult.getAlbums().getItems();
       if (albums != null && !albums.isEmpty()) {
         SpotifyAlbum firstAlbum = albums.get(0);
-        if (firstAlbum.getArtist().equals(album.getArtist())) {
-          spotifyAlbum = Optional.of(firstAlbum);
-        }
+        spotifyAlbum = Optional.of(firstAlbum);
       }
 
     }
@@ -100,20 +98,21 @@ public class SpotifyAlbumClient {
 
   public List<LastfmAlbum> getMissingAlbumsAsync(List<LastfmAlbum> lastfmAlbums) {
     String token = environment.getProperty(SPOTIFY_TOKEN);
-    UriTemplate searchArtistTemplate = new UriTemplate(SPOTIFY_SEARCH_URI);
+    List<LastfmAlbum> missingAlbums = new ArrayList<>();
 
-    List<CompletableFuture<List<LastfmAlbum>>> futures = new ArrayList<>();
-    for (int i = 0; i < lastfmAlbums.size(); i = i + ALBUM_BATCH_SIZE) {
-      int startIndex = i;
-      int endIndex = Math.min(startIndex + ALBUM_BATCH_SIZE, lastfmAlbums.size());
-      CompletableFuture<List<LastfmAlbum>> future = CompletableFuture.supplyAsync(() -> searchAlbums(lastfmAlbums.subList(startIndex, endIndex), searchArtistTemplate, token));
-      futures.add(future);
-    }
-
-    CompletableFuture<List<LastfmAlbum>>[] array = futures.toArray(new CompletableFuture[0]);
-    CompletableFuture completableFuture = CompletableFuture.allOf(array);
-    List<LastfmAlbum> missingAlbums = null;
     try {
+      UriTemplate searchArtistTemplate = new UriTemplate(SPOTIFY_SEARCH_URI);
+
+      List<CompletableFuture<List<LastfmAlbum>>> futures = new ArrayList<>();
+      for (int i = 0; i < lastfmAlbums.size(); i = i + ALBUM_BATCH_SIZE) {
+        int startIndex = i;
+        int endIndex = Math.min(startIndex + ALBUM_BATCH_SIZE, lastfmAlbums.size());
+        CompletableFuture<List<LastfmAlbum>> future = CompletableFuture.supplyAsync(() -> searchAlbums(lastfmAlbums.subList(startIndex, endIndex), searchArtistTemplate, token));
+        futures.add(future);
+      }
+
+      CompletableFuture<List<LastfmAlbum>>[] array = futures.toArray(new CompletableFuture[0]);
+      CompletableFuture completableFuture = CompletableFuture.allOf(array);
       completableFuture.get();
       missingAlbums = Stream.of(array).map(CompletableFuture::join).flatMap(List::stream).collect(Collectors.toList());
     } catch (InterruptedException | ExecutionException e) {
