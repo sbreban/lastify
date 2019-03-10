@@ -51,7 +51,7 @@ public class LastfmAlbumClient {
 
     List<CompletableFuture<LastfmTopAlbumsResponse>> futures = new ArrayList<>();
     if (totalPages > 0) {
-      for (int page = pageData.getPage(); page < totalPages; page++) {
+      for (int page = pageData.getPage()+1; page < totalPages; page++) {
         int finalPage = page;
         CompletableFuture<LastfmTopAlbumsResponse> future = CompletableFuture.supplyAsync(() -> getLastfmTopAlbumsResponse(finalPage, uriTemplate, username, apiKey));
         futures.add(future);
