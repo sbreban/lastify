@@ -1,5 +1,6 @@
 package net.sbreban.lastify.repository;
 
+import com.wrapper.spotify.model_objects.credentials.ClientCredentials;
 import net.sbreban.lastify.model.lastfm.LastfmAlbum;
 import net.sbreban.lastify.model.spotify.SpotifyAlbum;
 import net.sbreban.lastify.model.spotify.SpotifyAlbumSearchResult;
@@ -8,7 +9,6 @@ import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.client.Client;
@@ -31,18 +31,17 @@ public class SpotifyAlbumClient {
 
   private final static Logger logger = LoggerFactory.getLogger(SpotifyAlbumClient.class);
 
-  private static final String SPOTIFY_TOKEN = "spotify.token";
   private static final String SPOTIFY_SEARCH_URI
       = "https://api.spotify.com/v1/search?q=album%3A{album}%20artist%3A{artist}&type=album&limit=1";
-  private static final int ALBUM_BATCH_SIZE = 100;
+  private static final int ALBUM_BATCH_SIZE = 250;
   private static final String RETRY_AFTER = "Retry-After";
 
-  private final Environment environment;
+  private final SpotifyCredentialsProvider credentialsProvider;
   private Client spotifyClient = ClientBuilder.newBuilder().register(JacksonFeature.class).register(ObjectMapperProvider.class).build();
 
   @Autowired
-  public SpotifyAlbumClient(Environment environment) {
-    this.environment = environment;
+  public SpotifyAlbumClient(SpotifyCredentialsProvider credentialsProvider) {
+    this.credentialsProvider = credentialsProvider;
   }
 
   private Optional<SpotifyAlbum> searchAlbum(LastfmAlbum album, UriTemplate searchArtistTemplate, String token) {
@@ -65,7 +64,7 @@ public class SpotifyAlbumClient {
         spotifyAlbumSearchResult = spotifyResponse.readEntity(SpotifyAlbumSearchResult.class);
       } else if (StatusCode.isTooManyRequests(statusInfo.getStatusCode())) {
         int retryAfter = Integer.parseInt(spotifyResponse.getHeaderString(RETRY_AFTER));
-        Thread.sleep(retryAfter*1000);
+        Thread.sleep(retryAfter * 1000);
         return searchAlbum(album, searchArtistTemplate, token);
       }
     } catch (Exception e) {
@@ -104,7 +103,6 @@ public class SpotifyAlbumClient {
   public List<LastfmAlbum> getMissingAlbums(List<LastfmAlbum> lastfmAlbums) {
     long startTime = System.currentTimeMillis();
 
-    String token = environment.getProperty(SPOTIFY_TOKEN);
     List<LastfmAlbum> missingAlbums = new ArrayList<>();
 
     try {
@@ -114,7 +112,11 @@ public class SpotifyAlbumClient {
       for (int i = 0; i < lastfmAlbums.size(); i = i + ALBUM_BATCH_SIZE) {
         int startIndex = i;
         int endIndex = Math.min(startIndex + ALBUM_BATCH_SIZE, lastfmAlbums.size());
-        CompletableFuture<List<LastfmAlbum>> future = CompletableFuture.supplyAsync(() -> searchAlbums(lastfmAlbums.subList(startIndex, endIndex), searchArtistTemplate, token));
+        CompletableFuture<List<LastfmAlbum>> future = CompletableFuture.supplyAsync(() -> {
+              ClientCredentials credentials = credentialsProvider.getCredentials();
+              return searchAlbums(lastfmAlbums.subList(startIndex, endIndex), searchArtistTemplate, credentials.getAccessToken());
+            }
+        );
         futures.add(future);
       }
 
