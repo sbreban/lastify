@@ -27,7 +27,6 @@ public class LastfmAlbumClient {
 
   private final static Logger logger = LoggerFactory.getLogger(LastfmAlbumClient.class);
 
-  private static final String LASTFM_USER = "lastfm.user";
   private static final String LASTFM_APIKEY = "lastfm.apikey";
 
   private static final String LASTFM_TOP_ALBUMS_URI
@@ -41,12 +40,11 @@ public class LastfmAlbumClient {
     this.environment = environment;
   }
 
-  public List<LastfmAlbum> getTopAlbums() {
+  public List<LastfmAlbum> getTopAlbums(String username) {
     UriTemplate uriTemplate = new UriTemplate(LASTFM_TOP_ALBUMS_URI);
-    String user = environment.getProperty(LASTFM_USER);
     String apiKey = environment.getProperty(LASTFM_APIKEY);
 
-    LastfmTopAlbumsResponse lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(1, uriTemplate, user, apiKey);
+    LastfmTopAlbumsResponse lastfmTopAlbumsResponse = getLastfmTopAlbumsResponse(1, uriTemplate, username, apiKey);
 
     PageData pageData = lastfmTopAlbumsResponse.getTopAlbums().getPageData();
     int totalPages = pageData.getTotalPages();
@@ -55,7 +53,7 @@ public class LastfmAlbumClient {
     if (totalPages > 0) {
       for (int page = pageData.getPage(); page < totalPages; page++) {
         int finalPage = page;
-        CompletableFuture<LastfmTopAlbumsResponse> future = CompletableFuture.supplyAsync(() -> getLastfmTopAlbumsResponse(finalPage, uriTemplate, user, apiKey));
+        CompletableFuture<LastfmTopAlbumsResponse> future = CompletableFuture.supplyAsync(() -> getLastfmTopAlbumsResponse(finalPage, uriTemplate, username, apiKey));
         futures.add(future);
       }
     }
